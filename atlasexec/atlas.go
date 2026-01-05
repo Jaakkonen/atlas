@@ -285,6 +285,9 @@ var defaultEnvs = map[string]string{
 // It exists here to be shared between the different packages that require login.
 var ErrRequireLogin = errors.New("command requires 'atlas login'")
 
+// ErrRequireEnterprise is returned when a Community Edition tries to use an Enterprise feature.
+var ErrRequireEnterprise = errors.New("this feature requires Atlas Enterprise Edition")
+
 // runCommand runs the given command and returns its output.
 func (c *Client) runCommand(ctx context.Context, args []string) (io.Reader, error) {
 	var stdout, stderr bytes.Buffer
@@ -363,6 +366,9 @@ func (c *Client) runErr(err error, stdout, stderr interface{ String() string }) 
 	// Explicit check the stderr for the login error.
 	if e == "Error: command requires 'atlas login'" {
 		return ErrRequireLogin
+	}
+	if strings.Contains(e, "is not supported by the community version") {
+		return fmt.Errorf("%w: %s", ErrRequireEnterprise, e)
 	}
 	return &Error{
 		err:    err,
